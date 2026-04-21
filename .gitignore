@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+
+# SQLite (banco de dev do before/)
+*.db
+*.sqlite
+*.sqlite3
+
+# Node (slides Slidev — futuro Plan C)
+node_modules/
+.output/
+dist/
+
+# Editor / OS
+.DS_Store
+.vscode/
+.idea/
+*.swp
+
+# Slidev build
+slides/dist/
