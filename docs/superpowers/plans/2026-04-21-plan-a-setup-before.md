@@ -438,7 +438,7 @@ class TravelPackage(Base):
     base_price = Column(Float, nullable=False)
     status = Column(String, default="active")  # active | cancelled
     cancelled_at = Column(DateTime, nullable=True)
-    kind = Column(String, default="standard")  # discriminator: standard | non_refundable
+    kind = Column(String, nullable=False, default="standard")  # discriminator: standard | non_refundable
     traveler_id = Column(Integer, ForeignKey("travelers.id"), nullable=True)
 
     traveler = relationship("Traveler", back_populates="packages")
