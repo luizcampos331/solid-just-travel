@@ -212,3 +212,63 @@ def test_price_with_cyber_monday_for_low_price_applies_10_percent(client: TestCl
 
     assert response.status_code == 200
     assert response.json()["final_price"] == 1800.0
+
+
+# ---------- Cancel-all (LSP trap) ----------
+
+
+def test_cancel_all_cancels_standard_packages(client: TestClient):
+    traveler_id = _create_traveler(client, email="owner@example.com")
+    for i in range(3):
+        client.post(
+            "/packages",
+            json={
+                "name": f"std-{i}",
+                "destination": "X",
+                "base_price": 100.0,
+                "kind": "standard",
+                "traveler_id": traveler_id,
+            },
+        )
+
+    response = client.delete(f"/travelers/{traveler_id}/packages")
+
+    assert response.status_code == 200
+    assert response.json()["cancelled"] == 3
+
+
+def test_cancel_all_fails_when_any_package_is_non_refundable(client_swallow_500: TestClient):
+    """THIS is the LSP trap contract.
+
+    In `before/`, the loop blows up mid-iteration when it meets a NonRefundable
+    package. We assert the PARTIAL FAILURE shape (5xx + some already cancelled).
+
+    In `after/` (Plan B), the endpoint will return 200 with two lists
+    (`cancelled` and `skipped`). The `after/` version will have its own test
+    that describes the new behavior. This contract lives only here.
+    """
+    traveler_id = _create_traveler(client_swallow_500, email="mix@example.com")
+    client_swallow_500.post(
+        "/packages",
+        json={
+            "name": "std-1",
+            "destination": "X",
+            "base_price": 100.0,
+            "kind": "standard",
+            "traveler_id": traveler_id,
+        },
+    )
+    client_swallow_500.post(
+        "/packages",
+        json={
+            "name": "non-refundable-1",
+            "destination": "X",
+            "base_price": 100.0,
+            "kind": "non_refundable",
+            "traveler_id": traveler_id,
+        },
+    )
+
+    response = client_swallow_500.delete(f"/travelers/{traveler_id}/packages")
+
+    assert response.status_code >= 500  # LSP bomb exploded
