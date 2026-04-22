@@ -63,3 +63,49 @@ class Traveler(Base):
             "document": self.document,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }
+
+
+class TravelPackage(Base):
+    """Base package class. Supports cancellation.
+
+    Subclasses will break LSP by overriding `cancel()` to throw — see below.
+    """
+
+    __tablename__ = "packages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    destination = Column(String, nullable=False)
+    base_price = Column(Float, nullable=False)
+    status = Column(String, default="active")  # active | cancelled
+    cancelled_at = Column(DateTime, nullable=True)
+    kind = Column(String, default="standard")  # discriminator: standard | non_refundable
+    traveler_id = Column(Integer, ForeignKey("travelers.id"), nullable=True)
+
+    traveler = relationship("Traveler", back_populates="packages")
+
+    __mapper_args__ = {
+        "polymorphic_on": kind,
+        "polymorphic_identity": "standard",
+    }
+
+    def cancel(self) -> None:
+        """Cancel the package — contract: always succeeds for a base TravelPackage."""
+        self.status = "cancelled"
+        self.cancelled_at = datetime.now(timezone.utc)
+
+
+class NonRefundablePackage(TravelPackage):
+    """LSP trap: overrides `cancel()` to throw.
+
+    A naive `for p in packages: p.cancel()` loop will blow up mid-iteration
+    when it hits an instance of this class — even though the static type is
+    `TravelPackage` and "should" support cancellation.
+    """
+
+    __mapper_args__ = {
+        "polymorphic_identity": "non_refundable",
+    }
+
+    def cancel(self) -> None:
+        raise ValueError("Non-refundable packages cannot be cancelled")
