@@ -575,6 +575,8 @@ Two intentional violations on display:
    needs `add()`. Writing a fake for tests becomes a nightmare.
 """
 
+from __future__ import annotations
+
 from sqlalchemy.orm import Session
 
 from before.app.models import TravelPackage
@@ -683,6 +685,8 @@ class PackageRepository:
         self._session.add_all(packages)
         self._session.commit()
 ```
+
+> Nota: `from __future__ import annotations` é necessário porque o método `list(self) -> list[TravelPackage]` rebinda o nome `list` no escopo da classe — as anotações seguintes (`list[TravelPackage]` em `find_by_destination`, `find_by_price_range`, `paginated`, `bulk_insert`) falhariam em tempo de definição sem o deferral. Alternativa seria renomear o método `list` pra `all`, mas isso mudaria o ponto pedagógico (queremos os nomes CRUD clássicos mostrando o inchaço da interface).
 
 - [ ] **Step 2: Commit**
 
