@@ -64,9 +64,13 @@ class PackageRepository:
         return self._session.get(TravelPackage, package_id)
 
     def list(self) -> list[TravelPackage]:
+        # Name intentionally shadows `list` to showcase the ISP smell —
+        # the builtin is still reachable from module scope, so it works.
         return list(self._session.query(TravelPackage).all())
 
     def update(self, package: TravelPackage) -> TravelPackage:
+        # Relies on caller passing an already-attached, mutated instance —
+        # a latent bug nobody audits because the interface is too fat.
         self._session.commit()
         return package
 
