@@ -4,9 +4,9 @@ Material da palestra "SOLID na prática com Clean Architecture minimalista" para
 
 ## Estrutura
 
-- [`before/`](./before) — CRUD FastAPI realista-ingênuo, com violações curadas dos 5 princípios SOLID
-- [`after/`](./after) — mesmo CRUD refatorado com Clean Arch minimalista + SOLID aplicado *(em construção)*
-- [`slides/`](./slides) — deck Slidev da palestra *(em construção)*
+- [`before/`](./before) — CRUD FastAPI realista-ingênuo, com violações curadas dos 5 princípios SOLID ✅
+- [`after/`](./after) — mesmo CRUD refatorado com Clean Arch minimalista + SOLID aplicado *(Plan B — em construção)*
+- [`slides/`](./slides) — deck Slidev da palestra *(Plan C — em construção)*
 - [`docs/`](./docs) — specs e planos de implementação
 
 ## Objetivo pedagógico
