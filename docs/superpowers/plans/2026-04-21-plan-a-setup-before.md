@@ -495,12 +495,12 @@ input and output, which blurs boundaries.
 """
 
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict
 
 
 class TravelerIn(BaseModel):
     name: str
-    email: EmailStr
+    email: str
     document: str
 
 
@@ -544,6 +544,8 @@ class PriceCalcOut(BaseModel):
     base_price: float
     final_price: float
 ```
+
+> Nota: o plano original pedia `EmailStr`, mas `email-validator` não é dep necessária pro pedagógico de SOLID. Mantemos `str` simples — na `after/` (Plan B) poderemos introduzir um Value Object `Email` que valida internamente, o que é ainda mais demonstrativo que delegar pro Pydantic.
 
 - [ ] **Step 2: Commit**
 
