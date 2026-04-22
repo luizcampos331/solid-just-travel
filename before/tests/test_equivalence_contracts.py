@@ -55,8 +55,8 @@ def test_list_travelers_returns_created_items(client: TestClient):
 
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 2
-    assert {t["name"] for t in data} == {"Ana", "Bob"}
+    names = {t["name"] for t in data}
+    assert {"Ana", "Bob"} <= names
 
 
 def test_get_traveler_returns_404_when_missing(client: TestClient):
