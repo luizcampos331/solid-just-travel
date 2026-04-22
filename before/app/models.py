@@ -4,7 +4,7 @@ WARNING: the classes here intentionally violate SOLID principles — they are th
 "before" of a refactoring talk. Do not take any of this as a pattern to follow.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
@@ -29,7 +29,7 @@ class Traveler(Base):
     name = Column(String, nullable=False)
     email = Column(String, nullable=False, unique=True)
     document = Column(String, nullable=False)  # CPF, 11 digits
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     packages = relationship("TravelPackage", back_populates="traveler")
 
