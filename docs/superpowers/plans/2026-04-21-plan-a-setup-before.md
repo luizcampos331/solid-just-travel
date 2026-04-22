@@ -948,6 +948,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from before.app.database import Base, engine
+from before.app import models  # noqa: F401 — register ORM models with Base.metadata
 from before.app.routers import packages, travelers
 
 
@@ -974,8 +975,10 @@ app.include_router(packages.router)
 
 @app.get("/health", tags=["infra"])
 def health() -> dict:
-    return {"status": "ok", "version": "before/0.1.0"}
+    return {"status": "ok", "version": f"before/{app.version}"}
 ```
+
+> Nota: o import explícito de `before.app.models` garante que `create_all` encontre todas as tabelas mesmo se refatorações futuras removerem os imports transitivos dos routers. O `version` no `/health` usa `app.version` pra evitar drift entre os dois lugares.
 
 - [ ] **Step 2: Rodar a app manualmente pra confirmar que sobe**
 
