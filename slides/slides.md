@@ -612,3 +612,161 @@ vão reconhecer a dor."
 -->
 
 ---
+
+# I — Interface Segregation Principle
+
+<div class="text-xl mt-4 mb-6">
+Interface pequena, cliente feliz.
+</div>
+
+<div class="text-base opacity-80">
+<p>Nenhuma classe deve ser forçada a depender de <strong>métodos que não usa</strong>.</p>
+<p>Se 80% dos clientes usam 20% da interface → acoplamento grátis no resto.</p>
+</div>
+
+<div class="mt-8 p-4 border-l-4 border-purple-400 bg-purple-50">
+<p class="italic">
+"PackageRepository tem 12 métodos. <code>CreatePackage</code> usa UM:
+<code>add()</code>. Mas pra testar você precisa de um fake que
+implementa OS 12. Quem já escreveu isso, levanta a mão."
+</p>
+</div>
+
+<!--
+Fala (2 min): "Quarta letra. Na palestra tradicional sobre ISP, a gente
+fala de 'interfaces gordas'. Mas isso fica abstrato. Pra júnior, a dor
+REAL aparece em testes. Mock gigante. Fake com NotImplementedError por
+todo canto. Toda vez que isso acontece, ISP está gritando."
+-->
+
+---
+
+# I — A dor no `before/`
+
+<<< @/snippets/before/fat_repository.py {all|4-16|21-28}{maxHeight:'450px'}
+
+<!--
+Fala (3 min): "[click] 12 métodos no repo real. add é o único usado pelo
+CreatePackage. [click] Fake de teste: 12 NotImplementedError. Se amanhã
+alguém adiciona um 13º método, toda infraestrutura de testes quebra.
+Pior: o fake é MAIOR que o código sendo testado. 3 linhas pra 20."
+
+Pergunta: "Quem já desistiu de escrever um teste porque o mock ficou
+maior que o código? Não precisa ter orgulho, todo mundo já fez."
+-->
+
+---
+
+# I — A cura no `after/`
+
+<<< @/snippets/after/isp_segregated.py {all|5-8|10-13|16-22|28-30}{maxHeight:'430px'}
+
+<!--
+Fala (3 min): "[click] 2 Protocols pequenos: Writer (2 métodos) e Reader
+(3 métodos). [click] PackageWriter tem só add e update. [click] Use case
+declara DEPENDÊNCIA ESTREITA: só Writer. [click] Fake de teste cabe num
+post-it: 2 métodos. Mesmo CreatePackage, mesma funcionalidade, teste
+10× mais limpo."
+-->
+
+---
+
+# I — Before × After
+
+<div class="grid grid-cols-2 gap-4">
+
+<div>
+
+**Before**
+```python
+class PackageRepo:
+    def add(...): ...        # ← uso
+    def by_id(...): ...
+    def list(...): ...
+    def update(...): ...
+    def delete(...): ...
+    def find_destination...
+    def find_price_range...
+    def paginated(...): ...
+    def count_by_trav(...)...
+    def upsert(...): ...
+    def archive(...): ...
+    def bulk_insert(...): ...
+
+# Fake: 12 NotImpl + 1 real
+```
+
+- 12 métodos × N clientes = N*12 deps
+
+</div>
+
+<div>
+
+**After**
+```python
+class Writer(Protocol):
+    def add(...): ...
+    def update(...): ...
+
+class Reader(Protocol):
+    def by_id(...): ...
+    def list(...): ...
+    def by_traveler(...): ...
+
+# CreatePackage(writer: Writer)
+# ListPackages(reader: Reader)
+# Fake: 2 métodos. Acabou.
+```
+
+- Cada cliente declara só o que precisa
+
+</div>
+
+</div>
+
+<!--
+Fala (3 min): "Mesmo adapter concreto — SqlAlchemyPackageRepository —
+implementa AMBOS os Protocols. A fragmentação é no CONTRATO, não na
+implementação. Clientes veem slices pequenos. Infraestrutura unifica."
+-->
+
+---
+
+# I — O que ganhamos
+
+<v-clicks>
+
+- **Fakes cabem em 5 linhas** — teste vira documentação de uso
+- **Clientes declaram intenção** — tipo do parâmetro mostra "só escrevo" ou "só leio"
+- **Menos acoplamento acidental** — mudar o 13º método não quebra clientes de `add`
+- **Menos código de teste** — vocês voltam a escrever testes
+
+</v-clicks>
+
+<div v-click class="mt-8 text-center text-lg opacity-80">
+Mock gigante é ISP gritando. Se seu mock tem mais linhas que o código
+sendo testado, segregue.
+</div>
+
+<!--
+Fala (2 min): "Regra prática pra júnior: CONTAR LINHAS DE MOCK. Se
+excedem o código, ISP está pedindo socorro. Esse é o sinal."
+-->
+
+---
+layout: center
+---
+
+# Próximo: **D** — Dependency Inversion
+
+<div class="text-lg mt-6 opacity-70">
+O ponto alto. Vocês já usam DIP todo dia sem saber.
+</div>
+
+<!--
+Fala (30s): "Última letra. E é a que muda MAIS a vida de vocês. Vocês
+já usam DIP sem saber — a feature mais famosa do FastAPI é literalmente
+isso. Vamos destrinchar."
+-->
+
+---
