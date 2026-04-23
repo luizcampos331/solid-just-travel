@@ -138,3 +138,164 @@ Pergunta final: "reconhecem isso?" — plateia responde → gancho pra slide S.
 -->
 
 ---
+
+# S — Single Responsibility Principle
+
+<div class="text-xl mt-4 mb-6">
+Uma classe deve ter apenas uma razão pra mudar.
+</div>
+
+<div class="text-base opacity-80">
+<p><strong>Leia como:</strong> responde a um <em>único stakeholder</em>.</p>
+<p>Não é "fazer uma coisa só" — é "ser pedida por uma pessoa só".</p>
+</div>
+
+<div class="mt-8 p-4 border-l-4 border-blue-400 bg-blue-50">
+<p class="italic">
+"Um Viajante não deve ser também quem valida CPF, quem salva no banco,
+e quem manda email de boas-vindas. Se Compliance muda validação,
+você não quer mexer em Viajante."
+</p>
+</div>
+
+<!--
+Fala (2 min): "Primeira letra. Definição clássica: 'uma classe, uma razão
+pra mudar'. Mas razão aqui é POLÍTICA, não técnica. Razão = stakeholder.
+Se o DBA muda o schema, se Compliance muda validação, se o Marketing
+muda o template de email — são 3 pessoas diferentes pedindo 3 mudanças
+diferentes. Se tudo vive na mesma classe, qualquer toque arrisca quebrar
+os outros dois."
+-->
+
+---
+
+# S — A dor no `before/`
+
+<<< @/snippets/before/traveler_god_class.py {all|10-14|16-18|20-21|23-24}{maxHeight:'400px'}
+
+<!--
+Fala (3 min): "Essa é a classe Traveler real do repo before. Vou destacar
+em pedaços. [click] validate(): regra de negócio. [click] save(): acesso
+a banco. [click] send_welcome_email(): SMTP. [click] to_dict(): formato
+de resposta. Quantos stakeholders? Compliance, DBA, SRE, Frontend. 4
+razões diferentes pra mudar. SRP violado, por definição."
+
+Pergunta: "Quem aqui já mudou uma classe por um motivo e quebrou outro
+fluxo sem querer? Levante a mão." → geralmente todo júnior levanta.
+-->
+
+---
+
+# S — A cura no `after/`
+
+Uma responsabilidade, uma classe:
+
+<<< @/snippets/after/traveler_entity.py {all|2-11|14-18}{maxHeight:'380px'}
+
+<!--
+Fala (3 min): "Olhem a Traveler agora. 10 linhas. Só invariantes do
+próprio Traveler — nome com 2 chars. Email e Document são VOs que
+validam no construtor. E olhem embaixo: cada stakeholder ficou em SUA
+classe — DBA tem o repositório, Compliance tem o VO Document, SRE tem
+o notifier, Frontend tem o TravelerOut Pydantic."
+-->
+
+---
+
+# S — Before × After
+
+<div class="grid grid-cols-2 gap-4">
+
+<div>
+
+**Before**
+```python {all|none}
+class Traveler(Base):
+    __tablename__ = "..."
+    # 4 columns
+    def validate(self): ...       # Compliance
+    def save(self): ...           # DBA
+    def send_email(self): ...     # SRE
+    def to_dict(self): ...        # Frontend
+```
+
+- 40 linhas, 1 classe
+- 4 stakeholders
+- Compliance muda → risco de quebrar JSON
+
+</div>
+
+<div>
+
+**After**
+```python {all|none}
+@dataclass
+class Traveler:
+    name: str
+    email: Email
+    document: Document
+# + Document VO
+# + Email VO
+# + SqlAlchemyTravelerRepository
+# + StdoutWelcomeNotifier
+# + TravelerOut Pydantic
+```
+
+- 5 classes, ~10 linhas cada
+- 1 stakeholder por classe
+- Compliance muda → toca 1 arquivo
+
+</div>
+
+</div>
+
+<!--
+Fala (3 min): "Métrica real: 40 linhas viraram 5 classes de 10. PARECE
+mais código, mas cada peça responde a UM só. Pra Compliance mexer na
+validação de CPF, agora ela toca 1 arquivo (Document) — ela nem vê o
+banco, nem vê FastAPI, nem vê SMTP."
+-->
+
+---
+
+# S — O que ganhamos
+
+<v-clicks>
+
+- **Testabilidade**: testar `Document('12345678909')` não precisa de banco
+- **Isolamento de mudança**: trocar SMTP por SES não toca em Traveler
+- **Legibilidade**: cada arquivo tem um propósito óbvio
+- **Um bug menos por release**: mudanças acidentais caem
+
+</v-clicks>
+
+<div v-click class="mt-8 text-center text-lg opacity-80">
+Isso não foi "mais engenharia". Foi código no <strong>lugar certo</strong>.
+</div>
+
+<!--
+Fala (2 min): "Balanço. 4 ganhos. [click × 4]. O principal argumento
+pra júnior que ainda resiste: um bug menos por release. Toda vez que
+vocês mexem num God Class e quebram algo em outro lugar, SRP está gritando."
+-->
+
+---
+layout: center
+---
+
+# Próximo: **O** — Open/Closed
+
+<div class="text-lg mt-6 opacity-70">
+Lembram do if/elif no cálculo de preço do tour inicial?
+</div>
+<div class="text-lg mt-2 opacity-70">
+Era isso.
+</div>
+
+<!--
+Fala (30s): "Próximo princípio. Ponte direta: lembra o if/elif gigante no
+calculate_price que eu mostrei no tour? Esse código dói por causa de OCP.
+Vamos ver."
+-->
+
+---
