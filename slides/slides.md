@@ -770,3 +770,203 @@ isso. Vamos destrinchar."
 -->
 
 ---
+
+# D — Dependency Inversion Principle
+
+<div class="text-xl mt-4 mb-6">
+Dependa de abstrações, não de implementações.
+</div>
+
+<div class="text-base opacity-80">
+<p>Alto nível (regra de negócio) e baixo nível (banco, SMTP, cache)
+<strong>ambos dependem de abstração</strong>.</p>
+<p>A seta aponta sempre pra dentro, nunca pra fora.</p>
+</div>
+
+<div class="mt-8 p-4 border-l-4 border-green-400 bg-green-50">
+<p class="italic">
+"A regra 'viajante menor de idade precisa de autorização' é política.
+Ela <strong>não pode</strong> depender de SQLAlchemy, FastAPI, Postgres.
+Se amanhã migrarmos pra MongoDB, a regra é idêntica."
+</p>
+</div>
+
+<!--
+Fala (2 min): "DIP é o que desenha a arquitetura. Seta aponta pra
+dentro. A regra de negócio é o CENTRO. Tudo que é detalhe — ORM,
+framework HTTP, email provider — roda em torno e depende dela, não o
+contrário."
+-->
+
+---
+
+# D — A dor no `before/`
+
+<<< @/snippets/before/dip_violation_router.py {all|1-2|6-7|9-14}{maxHeight:'440px'}
+
+<!--
+Fala (3 min): "[click] Router importa SessionLocal. Handler de negócio
+importando INFRA. Seta invertida. [click] Construção de sessão dentro
+do handler. [click] Chamadas ORM diretas. Pra testar? Precisa subir
+banco. Pra trocar banco? Mexe no handler. Regra de negócio ACOPLADA
+a detalhe."
+-->
+
+---
+
+# D — A cura no `after/`
+
+<<< @/snippets/after/dip_composition.py {all|2-6|9|12-13|16-17|20-24|28-34}{maxHeight:'430px'}
+
+<!--
+Fala (3 min): "[click] get_db provider. [click] DbSession alias. [click]
+Repo provider. [click] Aliases pros providers — economiza boilerplate.
+[click] Wiring do use case. [click] Handler: RECEBE o use case. Nunca
+importa banco, nunca importa SessionLocal, nunca importa SQLAlchemy.
+Regra de negócio PURA — depende só de Protocols."
+-->
+
+---
+
+# D — O `Depends()` do FastAPI **é DIP**
+
+<div class="text-lg mt-4 mb-6">
+
+Vocês já usam isso **todo dia**:
+
+</div>
+
+```python
+# FastAPI docs — exemplo oficial
+def get_db():
+    db = SessionLocal()
+    try: yield db
+    finally: db.close()
+
+@app.post("/items/")
+def create_item(
+    item: ItemIn,
+    db: Session = Depends(get_db)  # ← inversão de dependência
+):
+    ...
+```
+
+<div class="mt-8 text-center text-xl">
+
+A feature mais vendida do FastAPI é **literalmente DIP**.
+
+</div>
+
+<!--
+Fala (2 min): "Aqui está o 'aha moment'. Vocês leram a doc do FastAPI,
+aprenderam Depends(), acharam conveniente. NINGUÉM te disse que você
+estava aplicando DIP. Mas está. O que muda no after: em vez de depender
+de CLASSE CONCRETA (SessionLocal, SqlAlchemyTravelerRepository), vocês
+dependem de PROTOCOL (TravelerRepository). Mesma mecânica, abstração
+maior."
+-->
+
+---
+
+# D — Before × After
+
+<div class="grid grid-cols-2 gap-4">
+
+<div>
+
+**Before**
+```python
+from ... import SessionLocal
+
+@router.post("/travelers")
+def create(body):
+    session = SessionLocal()
+    try:
+        t = Traveler(...)
+        t.validate()
+        t.save(session)
+        t.send_welcome_email()
+        return ...
+    finally:
+        session.close()
+```
+
+- Handler conhece INFRA
+- 9 linhas de boilerplate
+- Teste precisa de banco
+
+</div>
+
+<div>
+
+**After**
+```python
+@router.post("/travelers")
+def create(
+    body: TravelerIn,
+    uc: Annotated[
+        CreateTraveler,
+        Depends(get_create_traveler_uc)
+    ],
+) -> TravelerOut:
+    t = uc.execute(body.to_input())
+    return TravelerOut.from_domain(t)
+```
+
+- Handler conhece só use case
+- 2 linhas de lógica
+- Teste usa fake
+
+</div>
+
+</div>
+
+<!--
+Fala (3 min): "Contem as linhas. Antes: 9 linhas, das quais 6 são
+plumbing (SessionLocal, try/finally, close). Depois: 2 linhas de
+negócio. O use case esconde o ciclo todo. Teste no after: injeta fake,
+roda em 1ms."
+-->
+
+---
+
+# D — O que ganhamos
+
+<v-clicks>
+
+- **Regra de negócio testável sem banco** — use case + fake = 1ms
+- **Trocar ORM é trivial** — só `infra/` muda
+- **Composition root explícito** — `dependencies.py` mostra o mapa
+- **Handlers triviais** — 3-5 linhas, impossível esconder bug
+
+</v-clicks>
+
+<div v-click class="mt-8 text-center text-lg opacity-80">
+Vocês <strong>já</strong> aplicam DIP. Agora é só apontar pra Protocol
+em vez de classe concreta.
+</div>
+
+<!--
+Fala (2 min): "Ganho principal: testabilidade. Antes, precisamos do
+banco pra testar 'criar viajante'. Depois, um InMemoryRepository. Esse
+é o argumento que vende pro júnior que nunca escreveu teste 'porque dá
+trabalho' — olha, não dá mais."
+-->
+
+---
+layout: center
+class: text-center
+---
+
+# Acabamos os 5 princípios.
+
+<div class="text-lg mt-6 opacity-70">
+Antes do fechamento, uma tabela-resumo.
+</div>
+
+<!--
+Fala (15s): "Fim do miolo. Antes de amarrar com Clean Arch, um slide de
+review rápido — cabulete que vocês podem colar na mesa de vocês."
+-->
+
+---
