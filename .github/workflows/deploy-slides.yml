@@ -2,7 +2,7 @@ name: Deploy Slidev slides to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [production]
     paths:
       - "slides/**"
       - ".github/workflows/deploy-slides.yml"
