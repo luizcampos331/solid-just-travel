@@ -1132,3 +1132,135 @@ diferente, mesmo destino."
 -->
 
 ---
+
+# Quando SOLID pede ainda mais separação
+
+<div class="text-lg mt-4 mb-6">
+Sinais de que projeto grande precisa <strong>extra</strong>:
+</div>
+
+<v-clicks>
+
+- Handler > 15 linhas com orquestração complexa → extraia controller
+- Mesma ação em HTTP + CLI + worker → controller centraliza
+- API com 80+ endpoints → separe `routes/` de `controllers/` pra ter o mapa
+
+</v-clicks>
+
+<div v-click class="mt-8 p-4 border-l-4 border-yellow-400 bg-yellow-50">
+<p class="italic text-lg">
+<strong>Regra de ouro final:</strong> SOLID responde a dor.<br/>
+Enquanto <strong>não dói</strong>, seu handler de 5 linhas <strong>é</strong> o design correto.
+</p>
+</div>
+
+<!--
+Fala (2 min): "Pergunta que vocês vão ter: 'quando separo rotas de
+controllers?'. Resposta: QUANDO DOER. Projeto com 5 endpoints e
+handler de 3 linhas não precisa. Projeto com 80 endpoints e handler
+de 20 linhas precisa. SOLID é reagir a dor, nunca preventivo."
+-->
+
+---
+
+# O que fazer segunda-feira de manhã
+
+<v-clicks>
+
+1. **Escolha UM arquivo** que incomoda — só um
+2. **Identifique qual letra dói** mais ali (use a tabela-resumo)
+3. **Refatore 1 princípio por vez** — não SOLID-e tudo de uma
+4. **Escreva o teste antes** — garante que comportamento não muda
+5. **PR com review** pedindo feedback no princípio aplicado
+
+</v-clicks>
+
+<div v-click class="mt-8 text-center text-lg opacity-80">
+Em 6 meses, vocês olham o código e não reconhecem mais.<br/>
+De orgulho.
+</div>
+
+<!--
+Fala (2 min): "Plano de ação concreto. Um princípio por PR, uma
+refatoração por semana. Em 6 meses, o código da Just Travel vai
+estar irreconhecível. Se vocês vierem pedir code review com 'esse PR
+aplica OCP no discount', vou pagar um café pra cada um."
+-->
+
+---
+layout: two-cols
+class: pt-8
+---
+
+# Me segue lá
+
+<div class="flex flex-col items-center">
+  <img src="/linkedin-avatar.jpg" class="w-32 h-32 rounded-full" />
+  <p class="mt-4 font-bold text-xl">Luiz Campos</p>
+  <p class="opacity-70">@luizcampos331</p>
+  <p class="mt-2 text-sm">linkedin.com/in/luizcampos331</p>
+</div>
+
+<div class="mt-6 text-sm opacity-80 text-center max-w-xs">
+DM liberada — dúvida, code review, projeto novo. <br/>
+Respondo todos.
+</div>
+
+::right::
+
+# Pra continuar estudando
+
+<v-clicks>
+
+- 📖 *Clean Architecture* — **Robert C. Martin**
+- 📖 *A Philosophy of Software Design* — **John Ousterhout** (complementa)
+- 🎥 [refactoring.guru](https://refactoring.guru) — patterns com exemplos
+- 💻 Este repo: [github.com/luizcampos331/solid-just-travel](https://github.com/luizcampos331/solid-just-travel)
+
+</v-clicks>
+
+<!--
+Fala (2 min): "LinkedIn aberto. O repo vai ficar público, clonar à
+vontade, usar em projetos. Livros recomendados: o Uncle Bob pro panorama,
+o Ousterhout pra reduzir complexidade. Refactoring.guru é o melhor site
+gratuito sobre patterns."
+
+NOTA PRÉ-PALESTRA: atualizar URL do repo no slide pra ficar consistente
+com onde vai ser publicado. Substituir placeholder avatar.
+-->
+
+---
+layout: center
+class: text-center
+---
+
+# Obrigado.
+
+<div class="text-2xl mt-6 opacity-70">
+Perguntas?
+</div>
+
+<div class="mt-16 text-sm opacity-50">
+github.com/luizcampos331/solid-just-travel
+</div>
+
+<!--
+Fala (4 min Q&A): deixar aberto. Perguntas comuns antecipadas:
+
+1. "Quando devo separar services/ do application/?"
+   R: Nunca. application/ JÁ é services/. Se estão separados, é
+   redundância.
+
+2. "E quando preciso de transações?"
+   R: Unit of Work pattern. Use case recebe UoW em vez de repositório
+   direto. É uma extensão natural de DIP que NÃO precisa hoje.
+
+3. "Preciso ter TODOS os 4 layers sempre?"
+   R: Não. CRUD simples? 2 layers bastam (domain + presentation).
+   Regra: camada a mais só se a dor atual justifica.
+
+4. "Dataclass vs Pydantic em domain/?"
+   R: Dataclass. Pydantic é pra serialização (presentation). Se seu
+   domain importa Pydantic, tá violando DIP.
+-->
+
