@@ -450,3 +450,165 @@ Loop inocente. Vai explodir. Vamos ver POR QUE e como curar."
 -->
 
 ---
+
+# L — Liskov Substitution Principle
+
+<div class="text-xl mt-4 mb-6">
+Subtipo deve ser substituível pelo tipo-pai sem quebrar contratos.
+</div>
+
+<div class="text-base opacity-80">
+<p>Se uma função aceita <code>TravelPackage</code>, ela tem que aceitar
+<strong>qualquer subclasse</strong> sem explodir.</p>
+<p>Herança é <em>promessa</em>, não atalho.</p>
+</div>
+
+<div class="mt-8 p-4 border-l-4 border-red-400 bg-red-50">
+<p class="italic">
+"TravelPackage tem <code>.cancel()</code>. Alguém criou
+NonRefundablePackage herdando e sobrescreveu pra jogar exceção.
+Dia seguinte, 'cancelar todos os pacotes do viajante' rodou em
+produção, iterou 40, achou 1 não-reembolsável. 39 parcialmente
+cancelados. Caos."
+</p>
+</div>
+
+<!--
+Fala (2 min): "LSP é o mais abstrato dos 5, mas a dor é a mais concreta.
+Herança parece atalho — 'quase igual, só muda um método'. Mas cada
+override que quebra contrato é uma bomba-relógio. Bomba pra quem? Pro
+for inocente lá na frente, que vocês ainda nem escreveram."
+-->
+
+---
+
+# L — A dor no `before/`
+
+<<< @/snippets/before/lsp_bomb.py {all|1-4|7-9|12-21|18-19}{maxHeight:'420px'}
+
+<!--
+Fala (3 min): "[click] Classe base cancel() atualiza status. [click]
+Subclasse lança exception. [click] Service faz o for clássico. [click]
+ZOOM no 'package.cancel()' — esse é o momento da bomba. Query retorna
+MIX de TravelPackage e NonRefundablePackage (STI no SQLAlchemy). Loop
+itera. Hora que chega no primeiro NonRefundable: ValueError. Alguns já
+foram marcados 'cancelled' na memória. Partial failure clássico."
+
+Pergunta: "Quem já escreveu um for que funcionava nos testes e
+explodiu em produção porque entrou tipo diferente?" → mão levanta.
+-->
+
+---
+
+# L — A cura no `after/`
+
+<<< @/snippets/after/cancel_all_graceful.py {all|1-4|7-10|13-22}{maxHeight:'430px'}
+
+<!--
+Fala (3 min): "[click] CancelResult: honesto, duas listas. [click]
+Use case constructor: repo + policy. Sem herança. [click] O coração:
+check refundable ANTES de chamar policy. Non-refundable entra em skipped.
+Caller recebe AMBAS as listas. Sem exception. Sem partial failure."
+-->
+
+---
+
+# L — Before × After
+
+<div class="grid grid-cols-2 gap-4">
+
+<div>
+
+**Before**
+```python
+class NonRefundablePackage(
+    TravelPackage
+):
+    def cancel(self):
+        raise ValueError(...)
+
+# for package in packages:
+#     package.cancel()  # BOOM
+```
+
+- Subclass mente sobre o contrato
+- Loop "seguro" explode
+- Callers não têm defesa
+
+</div>
+
+<div>
+
+**After**
+```python
+@dataclass
+class TravelPackage:
+    refundable: bool   # data, not type
+
+class CancelAllOfTraveler:
+    def execute(self, tid):
+        for p in packages:
+            if p.refundable: cancel()
+            else: skip()
+        return CancelResult(...)
+```
+
+- Capability vira dado
+- Loop nunca explode
+- Caller sabe o que rolou
+
+</div>
+
+</div>
+
+<!--
+Fala (3 min): "Substituímos herança por **flag + policy**. Capability
+virou dado, não tipo. O endpoint HTTP mudou: no before retornava 500
+em partial; no after retorna 200 com JSON estruturado — 'cancelou 39,
+pulou 1'. Mesma intenção de negócio, **comunicação honesta**."
+-->
+
+---
+
+# L — O que ganhamos
+
+<v-clicks>
+
+- **Loops seguros** — iteração sobre tipo-pai sempre funciona
+- **Menos classes** — 1 em vez de 2 (tipos → flag)
+- **Contrato honesto** — caller sabe exatamente o que foi feito
+- **HTTP 200 em vez de 500** — UX muito melhor
+
+</v-clicks>
+
+<div v-click class="mt-8 text-center text-lg opacity-80">
+Regra prática: <strong>composição > herança</strong>, quase sempre.
+</div>
+
+<!--
+Fala (2 min): "4 ganhos. O mais comum na prática: substituir herança
+frágil por flag no dado. Você paga menos código e ganha previsibilidade.
+A industria percebeu isso — Java 21 tem sealed classes, Kotlin prefere
+data class + when, Rust nem tem herança de comportamento. Tendência."
+-->
+
+---
+layout: center
+---
+
+# Próximo: **I** — Interface Segregation
+
+<div class="text-lg mt-6 opacity-70">
+Lembram do repositório com 12 métodos do tour?
+</div>
+<div class="text-lg mt-2 opacity-70">
+Vamos ver por que o mock dele é um pesadelo.
+</div>
+
+<!--
+Fala (30s): "Quarta letra. Ponte: repositório gigante. Quem aqui já
+escreveu um mock com 10 NotImplementedError pra testar 3 linhas? Vocês
+vão reconhecer a dor."
+-->
+
+---
