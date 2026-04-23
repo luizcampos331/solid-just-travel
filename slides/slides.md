@@ -970,3 +970,165 @@ review rápido — cabulete que vocês podem colar na mesa de vocês."
 -->
 
 ---
+
+# Tabela-resumo SOLID
+
+| Princípio | Dor | Cura | Onde mora |
+|---|---|---|---|
+| **S** | Classe responde a muitos chefes | Separe por stakeholder | `domain` + `infra` + `presentation` |
+| **O** | Novo comportamento edita arquivo existente | Strategy / Policy | `domain/*/policy.py` |
+| **L** | Subclass mente sobre contrato | Composição + flag | `domain` (entidades planas) |
+| **I** | Interface fat obriga clientes a saber demais | Protocols pequenos | `domain/*/protocol.py` |
+| **D** | Alto nível depende de baixo nível | Ambos dependem de abstração | `domain` central, `infra` implementa |
+
+<div class="text-center mt-8 text-lg opacity-70">
+Esse slide é a <strong>cola</strong>. Printe e cole na mesa.
+</div>
+
+<!--
+Fala (2 min): "5 linhas. Pro primeiro mês de vocês praticando, esse é
+TODO o conteúdo que importa. Coluna 'Onde mora' vai fazer sentido nos
+próximos slides."
+-->
+
+---
+layout: center
+class: text-center
+---
+
+# Tour pelo `after/`
+
+<div class="text-xl mt-8">
+Já sabemos as curas. Agora, um zoom-out:
+</div>
+
+<div class="text-lg mt-4 opacity-70">
+<strong>o que a estrutura do repo virou?</strong>
+</div>
+
+<!--
+Fala (15s): "Vamos fazer o tour do after agora. Mesma funcionalidade
+do before, mas reorganizada."
+-->
+
+---
+
+# A estrutura que emergiu
+
+```
+after/app/
+├── domain/           ← núcleo puro (zero dep externa)
+│   ├── travelers/    ← Traveler + VOs + Protocols
+│   └── packages/     ← TravelPackage + policies + Protocols
+├── application/      ← use cases (1 por ação)
+│   ├── travelers/    ← create, list, get
+│   └── packages/     ← create, list, calculate_price, cancel_all
+├── infra/            ← adapters (SQLAlchemy + SMTP)
+│   └── persistence/notifications/
+├── presentation/     ← HTTP (FastAPI)
+│   ├── schemas.py    ← Pydantic IO
+│   └── routers/      ← handlers finos 3-5 linhas
+└── main.py           ← composition root
+```
+
+<!--
+Fala (2 min): "4 pastas. domain no centro. application rodeando.
+Infra implementando. Presentation na ponta. Isso tem um nome."
+-->
+
+---
+layout: center
+---
+
+# Esse desenho tem um nome:
+
+<div class="text-6xl mt-8 font-bold">
+Clean Architecture
+</div>
+
+<div class="text-lg mt-8 opacity-70 max-w-2xl">
+E aqui está a coisa <strong>importante</strong>:<br/>
+a gente <u>não decidiu</u> isso antes. <br/>
+<strong>Emergiu</strong> aplicando SOLID.
+</div>
+
+<!--
+Fala (1 min): "REVELAÇÃO. Isso que vocês veem há 75 minutos refatorando
+tem um nome famoso. Uncle Bob escreveu um livro sobre. Mas olha o que
+é diferente da apresentação tradicional: ele vende como 'a arquitetura
+certa'. Eu tô vendendo como 'o que sai quando você aplica 5 princípios
+com disciplina'. Essa diferença é importante."
+-->
+
+---
+
+# Cada princípio mora em camadas
+
+<div class="grid grid-cols-2 gap-4 mt-4">
+
+<div>
+
+**domain** (o núcleo)
+- **S** — entidades + VOs separados
+- **L** — entidades planas com flags
+- **O** — policies e strategies
+- **I** — Protocols segregados
+
+</div>
+
+<div>
+
+**application**
+- **S** — um use case por ação
+- Só conhece `domain/`
+
+**infra**
+- **D** — implementa Protocols do domain
+- Adapters plugáveis
+
+**presentation**
+- **S + I** — schemas e routers finos
+- **D** — composition root via `Depends()`
+
+</div>
+
+</div>
+
+<div v-click class="mt-8 text-center text-lg opacity-80">
+Setas apontam <strong>pra dentro</strong>. Sempre.
+</div>
+
+<!--
+Fala (2 min): "Mapa completo. Qual letra vive onde. DIP é o que
+desenha a arquitetura: ele diz que setas apontam pra dentro. SRP
+define o tamanho das caixas. OCP abre espaço dentro de cada caixa.
+ISP define a fronteira entre caixas. LSP garante que substituir
+implementação não quebra nada."
+-->
+
+---
+
+# Regras de ouro (que emergiram sozinhas)
+
+<v-clicks>
+
+1. **`domain/` é puro** — não importa FastAPI, SQLAlchemy, nada
+2. **Use cases orquestram regra** — 1 classe = 1 ação = 1 razão
+3. **`infra/` é plugável** — SQLite → Postgres sem tocar domain
+4. **`presentation/` é fino** — valida, chama, formata
+
+</v-clicks>
+
+<div v-click class="mt-8 text-center text-lg opacity-80">
+Essas regras <strong>não precisam ser decoradas</strong>. Elas caem
+naturalmente se vocês aplicarem SOLID.
+</div>
+
+<!--
+Fala (2 min): "Não decorem. Estudem SOLID, essas regras CAEM. É o
+contrário do que o livro do Uncle Bob sugere. Ele diz 'adote essa
+estrutura'. Eu digo 'pratique SOLID, a estrutura aparece'. Caminho
+diferente, mesmo destino."
+-->
+
+---
