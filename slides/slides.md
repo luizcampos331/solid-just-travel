@@ -299,3 +299,154 @@ Vamos ver."
 -->
 
 ---
+
+# O — Open/Closed Principle
+
+<div class="text-xl mt-4 mb-6">
+Aberto pra extensão, fechado pra modificação.
+</div>
+
+<div class="text-base opacity-80">
+<p>Novo comportamento entra via <strong>nova classe</strong>,
+não alterando a existente.</p>
+</div>
+
+<div class="mt-8 p-4 border-l-4 border-orange-400 bg-orange-50">
+<p class="italic">
+"Black Friday: 30%. Cyber Monday: progressivo. Cupom corporativo:
+flat. Se toda regra nova te obriga a abrir o mesmo arquivo e adicionar
+mais um <code>elif</code> — seu código está <em>fechado pra extensão</em>
+e <em>aberto pra modificação</em>. Exatamente o oposto."
+</p>
+</div>
+
+<!--
+Fala (2 min): "Segunda letra. Palavra-chave: TOCAR. Cada regra nova
+deveria entrar sem tocar em regra antiga. Por que? Porque toda vez que
+você toca em função que já funciona, você arrisca quebrar."
+-->
+
+---
+
+# O — A dor no `before/`
+
+<<< @/snippets/before/calculate_price_ifelse.py {all|5-7|8-9|10-11|12-14}{maxHeight:'420px'}
+
+<!--
+Fala (3 min): "Calculate_price. [click] seasonal. [click] black_friday
+adicionado ano passado. [click] corporate depois. [click] cyber_monday
+semana passada. 4 branches e contando. Quem quer fazer a feature 'desconto
+estudante'? É outro elif — e todo elif NOVO é um risco pros 4 antigos."
+-->
+
+---
+
+# O — A cura no `after/`
+
+<<< @/snippets/after/discount_strategies.py {all|2-3|5-6|17-22|25}{maxHeight:'420px'}
+
+<!--
+Fala (3 min): "Strategy pattern via Protocol. [click] Define o contrato.
+[click] NoDiscount. [click] Cyber Monday tem ramo interno — sim, mas é
+uma regra da própria estratégia, não alterna entre estratégias. [click]
+Nova promoção = nova classe. Zero edição em classe existente."
+-->
+
+---
+
+# O — Before × After
+
+<div class="grid grid-cols-2 gap-4">
+
+<div>
+
+**Before**
+```python
+def calculate_price(p, discount):
+    if discount == "seasonal":
+        ...
+    elif discount == "black_friday":
+        ...
+    elif discount == "corporate":
+        ...
+    elif discount == "cyber_monday":
+        ...
+```
+
+- Nova regra = editar função
+- Risco de regressão a cada release
+- Testes dependem da ordem dos ifs
+
+</div>
+
+<div>
+
+**After**
+```python
+class DiscountPolicy(Protocol):
+    def apply(self, p): ...
+
+class Seasonal: ...
+class BlackFriday: ...
+class Corporate: ...
+class CyberMonday: ...
+
+# + StudentDiscount (futura)
+```
+
+- Nova regra = nova classe
+- Zero toque em código antigo
+- Teste por política — isolado
+
+</div>
+
+</div>
+
+<!--
+Fala (3 min): "Mesma quantidade de regras, 5 no after vs 5 branches no
+before. Mas no after, adicionar a 6a não mexe nas outras. E teste: no
+before precisa parametrizar sobre 5 casos num único teste de integração.
+No after, cada política é uma classe testável de 3 linhas."
+-->
+
+---
+
+# O — O que ganhamos
+
+<v-clicks>
+
+- **Novas promoções sem quebrar antigas** — nunca mais "ih, o Black Friday quebrou"
+- **Testes triviais** — cada política = 2 linhas de teste
+- **Composição dinâmica** — selecionar política em runtime fica óbvio
+- **Código aberto pra extensão** (de verdade)
+
+</v-clicks>
+
+<div v-click class="mt-8 text-center text-lg opacity-80">
+Adicionar = criar arquivo novo. <strong>Zero risco</strong> no arquivo antigo.
+</div>
+
+<!--
+Fala (2 min): "4 ganhos. O mais palpável: testes de cada política rodam
+em microssegundos, sem banco, sem nada. 6 políticas, 6 testes paralelos."
+-->
+
+---
+layout: center
+---
+
+# Próximo: **L** — Liskov
+
+<div class="text-lg mt-6 opacity-70">
+Lembram do <code>for package: package.cancel()</code> do tour?
+</div>
+<div class="text-lg mt-2 opacity-70">
+Vai explodir agora.
+</div>
+
+<!--
+Fala (30s): "Terceira letra. Ponte: lembra o cancel_all no booking_service?
+Loop inocente. Vai explodir. Vamos ver POR QUE e como curar."
+-->
+
+---
