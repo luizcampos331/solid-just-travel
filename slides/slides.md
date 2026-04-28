@@ -189,7 +189,7 @@ fluxo sem querer? Levante a mão." → geralmente todo júnior levanta.
 
 Uma responsabilidade, uma classe:
 
-<<< @/snippets/after/traveler_entity.py {all|2-11|14-18}{maxHeight:'380px'}
+<<< @/snippets/after/traveler_entity.py {all|2-11|12-14|17-21}{maxHeight:'380px'}
 
 <!--
 Fala (3 min): "Olhem a Traveler agora. 10 linhas. Só invariantes do
@@ -323,7 +323,7 @@ estudante'? É outro elif — e todo elif NOVO é um risco pros 4 antigos."
 
 # O — A cura no `after/`
 
-<<< @/snippets/after/discount_strategies.py {all|2-3|6-7|17-22|25}{maxHeight:'420px'}
+<<< @/snippets/after/discount_strategies.py {all|2-3|6-7|9-10|12-13|15-16|18-22|25}{maxHeight:'420px'}
 
 <!--
 Fala (3 min): "Strategy pattern via Protocol. [click] Define o contrato.
