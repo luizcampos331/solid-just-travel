@@ -38,8 +38,8 @@ layout: two-cols
 # Quem fala
 
 - **Luiz Campos**
-- Dev backend, 10+ anos
-- Já tropecei em cada uma das 5 violações de SOLID em produção
+- Dev backend, 10+ anos de experiencia em tecnologia
+- Já sofri na pele a dor das violações de SOLID em produção
 - Hoje venho como "guia turístico" — vocês conhecem o código melhor que eu
 
 ::right::
@@ -105,36 +105,35 @@ repositório before/ e after/ pra olhar daqui a 3 meses quando esquecerem."
 -->
 
 ---
-layout: center
-class: text-center
----
 
-# Antes de começar
+# Estrutura do `before/`
 
-<div class="text-2xl mt-8">
+```
+before/app/
+├── database.py        ← engine + SessionLocal
+├── main.py            ← FastAPI app
+├── models.py          ← entidades ORM (+ validação + email + JSON)
+├── routers/           ← handlers HTTP
+│   ├── packages.py
+│   └── travelers.py
+├── schemas.py         ← Pydantic IO
+└── services/          ← lógica + repository
+    ├── booking_service.py
+    └── package_service.py
+```
 
-Vamos **fazer um tour** no código do repo `before/`.
-
-</div>
-
-<div class="text-lg mt-4 opacity-60">
-Guardem as "coisas estranhas" que eu vou apontar —
-volta-se a elas nos próximos 65 minutos.
+<div class="text-center mt-6 text-base opacity-70">
+Parece um FastAPI normal. <strong>Cada arquivo esconde uma das 5 violações.</strong>
 </div>
 
 <!--
-Fala (30s): "Antes de qualquer slide de princípio, tour rápido. Vou rodar
-a API before/ em localhost, fazer um request, e passar pelas pastas
-apontando coisas. Não precisa entender tudo agora — só guardem."
-
-TOUR AO VIVO (4 min):
-1. uv run uvicorn before.app.main:app --port 8000 — mostra /docs
-2. POST /travelers — mostra que funciona
-3. Abrir before/app/models.py::Traveler — "olhem essa classe, muitas coisas"
-4. Abrir before/app/services/package_service.py — "12 métodos no repo, if/elif no preço"
-5. Abrir before/app/services/booking_service.py — "for package: package.cancel()"
-6. Abrir before/app/routers/travelers.py — "SessionLocal direto no handler"
-Pergunta final: "reconhecem isso?" — plateia responde → gancho pra slide S.
+Fala (90s): "Antes de mergulhar nas letras, olhem a estrutura do before.
+Pasta routers/, services/, models/, schemas/ — tutorial clássico de
+FastAPI. Nada óbvio de errado à primeira vista. É justamente isso que
+torna SOLID interessante: o código DOENDO geralmente parece organizado.
+Cada um desses arquivos esconde uma das 5 violações que vamos abrir
+nos próximos 70 minutos. Guardem essa árvore — vamos voltar nela no
+final pra comparar com o que emergiu do after/."
 -->
 
 ---
@@ -142,11 +141,11 @@ Pergunta final: "reconhecem isso?" — plateia responde → gancho pra slide S.
 # S — Single Responsibility Principle
 
 <div class="text-xl mt-4 mb-6">
-Uma classe deve ter apenas uma razão pra mudar.
+Uma classe deve ter apenas uma razão para mudar.
 </div>
 
 <div class="text-base opacity-80">
-<p><strong>Leia como:</strong> responde a um <em>único stakeholder</em>.</p>
+<p><strong>Ou seja:</strong> responde a um <em>único stakeholder</em>.</p>
 <p>Não é "fazer uma coisa só" — é "ser pedida por uma pessoa só".</p>
 </div>
 
@@ -171,7 +170,7 @@ os outros dois."
 
 # S — A dor no `before/`
 
-<<< @/snippets/before/traveler_god_class.py {all|10-14|16-18|20-21|23-24}{maxHeight:'400px'}
+<<< @/snippets/before/traveler_god_class.py {all|10-16|18-21|24-25|28-30}{maxHeight:'400px'}
 
 <!--
 Fala (3 min): "Essa é a classe Traveler real do repo before. Vou destacar
@@ -280,25 +279,6 @@ vocês mexem num God Class e quebram algo em outro lugar, SRP está gritando."
 -->
 
 ---
-layout: center
----
-
-# Próximo: **O** — Open/Closed
-
-<div class="text-lg mt-6 opacity-70">
-Lembram do if/elif no cálculo de preço do tour inicial?
-</div>
-<div class="text-lg mt-2 opacity-70">
-Era isso.
-</div>
-
-<!--
-Fala (30s): "Próximo princípio. Ponte direta: lembra o if/elif gigante no
-calculate_price que eu mostrei no tour? Esse código dói por causa de OCP.
-Vamos ver."
--->
-
----
 
 # O — Open/Closed Principle
 
@@ -330,7 +310,7 @@ você toca em função que já funciona, você arrisca quebrar."
 
 # O — A dor no `before/`
 
-<<< @/snippets/before/calculate_price_ifelse.py {all|5-7|8-9|10-11|12-14}{maxHeight:'420px'}
+<<< @/snippets/before/calculate_price_ifelse.py {all|4-5|6-7|8-9|10-12}{maxHeight:'420px'}
 
 <!--
 Fala (3 min): "Calculate_price. [click] seasonal. [click] black_friday
@@ -343,13 +323,28 @@ estudante'? É outro elif — e todo elif NOVO é um risco pros 4 antigos."
 
 # O — A cura no `after/`
 
-<<< @/snippets/after/discount_strategies.py {all|2-3|5-6|17-22|25}{maxHeight:'420px'}
+<<< @/snippets/after/discount_strategies.py {all|2-3|6-7|17-22|25}{maxHeight:'420px'}
 
 <!--
 Fala (3 min): "Strategy pattern via Protocol. [click] Define o contrato.
 [click] NoDiscount. [click] Cyber Monday tem ramo interno — sim, mas é
 uma regra da própria estratégia, não alterna entre estratégias. [click]
 Nova promoção = nova classe. Zero edição em classe existente."
+
+Pergunta antecipada: "o que é esse Protocol?"
+
+Resposta de bolso: "Protocol é o jeito moderno de Python dizer 'qualquer
+classe com esse método serve aqui'. Tipo interface do TypeScript. Não
+precisa herdar nada — se tem apply(), é um DiscountPolicy. O ganho: a
+classe que implementa não precisa nem importar a Protocol."
+
+Pergunta antecipada: "mas o _pick_discount_policy em dependencies.py
+tem um match/case mapeando string → policy. Isso não é OCP de novo?"
+
+Resposta de bolso: "Esse match é o tradutor entre HTTP e domínio. Ele
+CONHECE todas as policies de propósito — alguém precisa. O ganho do OCP
+foi tirar isso de dentro do CÁLCULO. O cálculo continua intocado quando
+entra promoção nova."
 -->
 
 ---
@@ -423,30 +418,12 @@ No after, cada política é uma classe testável de 3 linhas."
 </v-clicks>
 
 <div v-click class="mt-8 text-center text-lg opacity-80">
-Adicionar = criar arquivo novo. <strong>Zero risco</strong> no arquivo antigo.
+Adicionar = nova classe. <strong>Zero edição</strong> nas que já funcionam.
 </div>
 
 <!--
 Fala (2 min): "4 ganhos. O mais palpável: testes de cada política rodam
 em microssegundos, sem banco, sem nada. 6 políticas, 6 testes paralelos."
--->
-
----
-layout: center
----
-
-# Próximo: **L** — Liskov
-
-<div class="text-lg mt-6 opacity-70">
-Lembram do <code>for package: package.cancel()</code> do tour?
-</div>
-<div class="text-lg mt-2 opacity-70">
-Vai explodir agora.
-</div>
-
-<!--
-Fala (30s): "Terceira letra. Ponte: lembra o cancel_all no booking_service?
-Loop inocente. Vai explodir. Vamos ver POR QUE e como curar."
 -->
 
 ---
@@ -484,15 +461,17 @@ for inocente lá na frente, que vocês ainda nem escreveram."
 
 # L — A dor no `before/`
 
-<<< @/snippets/before/lsp_bomb.py {all|1-4|7-9|12-21|18-19}{maxHeight:'420px'}
+<<< @/snippets/before/lsp_bomb.py {all|2-5|8-10|14-25|20-21}{maxHeight:'420px'}
 
 <!--
-Fala (3 min): "[click] Classe base cancel() atualiza status. [click]
+Fala (3min30s): "[click] Classe base cancel() atualiza status. [click]
 Subclasse lança exception. [click] Service faz o for clássico. [click]
 ZOOM no 'package.cancel()' — esse é o momento da bomba. Query retorna
 MIX de TravelPackage e NonRefundablePackage (STI no SQLAlchemy). Loop
 itera. Hora que chega no primeiro NonRefundable: ValueError. Alguns já
-foram marcados 'cancelled' na memória. Partial failure clássico."
+foram marcados 'cancelled' na memória. Partial failure clássico.
+Pausa pra digerir — Liskov é o mais abstrato dos 5, vale repetir
+o caminho da bomba devagar."
 
 Pergunta: "Quem já escreveu um for que funcionava nos testes e
 explodiu em produção porque entrou tipo diferente?" → mão levanta.
@@ -502,7 +481,7 @@ explodiu em produção porque entrou tipo diferente?" → mão levanta.
 
 # L — A cura no `after/`
 
-<<< @/snippets/after/cancel_all_graceful.py {all|1-4|7-10|13-22}{maxHeight:'430px'}
+<<< @/snippets/after/cancel_all_graceful.py {all|2-5|9-12|14-24}{maxHeight:'430px'}
 
 <!--
 Fala (3 min): "[click] CancelResult: honesto, duas listas. [click]
@@ -590,25 +569,25 @@ Fala (2 min): "4 ganhos. O mais comum na prática: substituir herança
 frágil por flag no dado. Você paga menos código e ganha previsibilidade.
 A industria percebeu isso — Java 21 tem sealed classes, Kotlin prefere
 data class + when, Rust nem tem herança de comportamento. Tendência."
--->
 
----
-layout: center
----
+Frases-âncora pra usar ao explicar cada bullet:
 
-# Próximo: **I** — Interface Segregation
+Sobre "Menos classes":
+"Toda vez que você cria uma subclasse só pra mudar o comportamento de UM
+método, pergunte: 'isso é um tipo diferente, ou é o mesmo tipo com uma
+flag?'. Quase sempre é a flag."
 
-<div class="text-lg mt-6 opacity-70">
-Lembram do repositório com 12 métodos do tour?
-</div>
-<div class="text-lg mt-2 opacity-70">
-Vamos ver por que o mock dele é um pesadelo.
-</div>
+Sobre "Contrato honesto":
+"Honesto = a assinatura da função fala a verdade. Se a função pode falhar
+parcialmente, o tipo de retorno tem que admitir isso. Esconder com int ou
+void é mentir pro caller."
 
-<!--
-Fala (30s): "Quarta letra. Ponte: repositório gigante. Quem aqui já
-escreveu um mock com 10 NotImplementedError pra testar 3 linhas? Vocês
-vão reconhecer a dor."
+Sobre a regra final "composição > herança":
+"Herança é uma promessa rígida — 'subtipo se comporta como pai'. Toda vez
+que um subtipo precisa mentir sobre essa promessa (override que muda
+contrato), você acabou de plantar bomba. Se você precisa de polimorfismo,
+prefira interface (Protocol em Python) + composição. Reserve herança pra
+casos onde o subtipo só acrescenta, nunca substitui."
 -->
 
 ---
@@ -628,7 +607,7 @@ Interface pequena, cliente feliz.
 <p class="italic">
 "PackageRepository tem 12 métodos. <code>CreatePackage</code> usa UM:
 <code>add()</code>. Mas pra testar você precisa de um fake que
-implementa OS 12. Quem já escreveu isso, levanta a mão."
+implementa OS 12."
 </p>
 </div>
 
@@ -643,13 +622,16 @@ todo canto. Toda vez que isso acontece, ISP está gritando."
 
 # I — A dor no `before/`
 
-<<< @/snippets/before/fat_repository.py {all|4-16|21-28}{maxHeight:'450px'}
+<<< @/snippets/before/fat_repository.py {all|5-17|20-28}{maxHeight:'450px'}
 
 <!--
-Fala (3 min): "[click] 12 métodos no repo real. add é o único usado pelo
+Fala (3min30s): "[click] 12 métodos no repo real. add é o único usado pelo
 CreatePackage. [click] Fake de teste: 12 NotImplementedError. Se amanhã
 alguém adiciona um 13º método, toda infraestrutura de testes quebra.
-Pior: o fake é MAIOR que o código sendo testado. 3 linhas pra 20."
+Pior: o fake é MAIOR que o código sendo testado. 3 linhas pra 20.
+Pausa: ISP costuma ser confundido com 'classes pequenas'. Reforce a
+distinção — é sobre o cliente NÃO ser obrigado a saber dos métodos
+que não usa."
 
 Pergunta: "Quem já desistiu de escrever um teste porque o mock ficou
 maior que o código? Não precisa ter orgulho, todo mundo já fez."
@@ -659,7 +641,7 @@ maior que o código? Não precisa ter orgulho, todo mundo já fez."
 
 # I — A cura no `after/`
 
-<<< @/snippets/after/isp_segregated.py {all|5-8|10-13|16-22|28-30}{maxHeight:'430px'}
+<<< @/snippets/after/isp_segregated.py {all|6-8|11-14|16-22|25-29}{maxHeight:'430px'}
 
 <!--
 Fala (3 min): "[click] 2 Protocols pequenos: Writer (2 métodos) e Reader
@@ -667,6 +649,15 @@ Fala (3 min): "[click] 2 Protocols pequenos: Writer (2 métodos) e Reader
 declara DEPENDÊNCIA ESTREITA: só Writer. [click] Fake de teste cabe num
 post-it: 2 métodos. Mesmo CreatePackage, mesma funcionalidade, teste
 10× mais limpo."
+
+Pergunta antecipada: "cadê o sufixo Repository?"
+
+Resposta de bolso: "Sufixo descreve o papel que a classe cumpre, não a
+categoria arquitetural. Quando o repositório é monolítico, o papel é
+'ser repositório'. Quando você fragmenta, cada fragmento ganha o papel
+mais específico." (E o adapter concreto SqlAlchemyPackageRepository
+mantém o sufixo — só os Protocols fragmentados é que ganham nome por
+papel: Writer/Reader, à la io.Reader/io.Writer do Go.)
 -->
 
 ---
@@ -739,7 +730,7 @@ implementação. Clientes veem slices pequenos. Infraestrutura unifica."
 - **Fakes cabem em 5 linhas** — teste vira documentação de uso
 - **Clientes declaram intenção** — tipo do parâmetro mostra "só escrevo" ou "só leio"
 - **Menos acoplamento acidental** — mudar o 13º método não quebra clientes de `add`
-- **Menos código de teste** — vocês voltam a escrever testes
+- **Menos código de teste** — escrever teste fica trivial
 
 </v-clicks>
 
@@ -754,22 +745,6 @@ excedem o código, ISP está pedindo socorro. Esse é o sinal."
 -->
 
 ---
-layout: center
----
-
-# Próximo: **D** — Dependency Inversion
-
-<div class="text-lg mt-6 opacity-70">
-O ponto alto. Vocês já usam DIP todo dia sem saber.
-</div>
-
-<!--
-Fala (30s): "Última letra. E é a que muda MAIS a vida de vocês. Vocês
-já usam DIP sem saber — a feature mais famosa do FastAPI é literalmente
-isso. Vamos destrinchar."
--->
-
----
 
 # D — Dependency Inversion Principle
 
@@ -780,7 +755,6 @@ Dependa de abstrações, não de implementações.
 <div class="text-base opacity-80">
 <p>Alto nível (regra de negócio) e baixo nível (banco, SMTP, cache)
 <strong>ambos dependem de abstração</strong>.</p>
-<p>A seta aponta sempre pra dentro, nunca pra fora.</p>
 </div>
 
 <div class="mt-8 p-4 border-l-4 border-green-400 bg-green-50">
@@ -802,7 +776,7 @@ contrário."
 
 # D — A dor no `before/`
 
-<<< @/snippets/before/dip_violation_router.py {all|1-2|6-7|9-14}{maxHeight:'440px'}
+<<< @/snippets/before/dip_violation_router.py {all|5-7|9-15}{maxHeight:'440px'}
 
 <!--
 Fala (3 min): "[click] Router importa SessionLocal. Handler de negócio
@@ -816,14 +790,16 @@ a detalhe."
 
 # D — A cura no `after/`
 
-<<< @/snippets/after/dip_composition.py {all|2-6|9|12-13|16-17|20-24|28-34}{maxHeight:'430px'}
+<<< @/snippets/after/dip_composition.py {all|2-7|10|13-14|17-18|20-24|28-34}{maxHeight:'430px'}
 
 <!--
-Fala (3 min): "[click] get_db provider. [click] DbSession alias. [click]
+Fala (3min30s): "[click] get_db provider. [click] DbSession alias. [click]
 Repo provider. [click] Aliases pros providers — economiza boilerplate.
 [click] Wiring do use case. [click] Handler: RECEBE o use case. Nunca
 importa banco, nunca importa SessionLocal, nunca importa SQLAlchemy.
-Regra de negócio PURA — depende só de Protocols."
+Regra de negócio PURA — depende só de Protocols. Esse é o slide mais
+denso da palestra; vale percorrer cada Annotated com calma e mostrar
+que NADA aqui é mágico — é Python composto."
 -->
 
 ---
@@ -858,12 +834,14 @@ A feature mais vendida do FastAPI é **literalmente DIP**.
 </div>
 
 <!--
-Fala (2 min): "Aqui está o 'aha moment'. Vocês leram a doc do FastAPI,
+Fala (3 min): "Aqui está o 'aha moment'. Vocês leram a doc do FastAPI,
 aprenderam Depends(), acharam conveniente. NINGUÉM te disse que você
 estava aplicando DIP. Mas está. O que muda no after: em vez de depender
 de CLASSE CONCRETA (SessionLocal, SqlAlchemyTravelerRepository), vocês
 dependem de PROTOCOL (TravelerRepository). Mesma mecânica, abstração
-maior."
+maior. Reforço: peça pra alguém da plateia explicar com as próprias
+palavras antes de avançar — esse insight é o que mais cola na semana
+seguinte. Se o time pegou esse, levou a palestra."
 -->
 
 ---
@@ -892,7 +870,7 @@ def create(body):
 ```
 
 - Handler conhece INFRA
-- 9 linhas de boilerplate
+- Mais código pra abrir/fechar sessão do que pra criar viajante
 - Teste precisa de banco
 
 </div>
@@ -936,14 +914,13 @@ roda em 1ms."
 
 - **Regra de negócio testável sem banco** — use case + fake = 1ms
 - **Trocar ORM é trivial** — só `infra/` muda
-- **Composition root explícito** — `dependencies.py` mostra o mapa
+- **Composition root explícito** — `presentation/dependencies.py` mostra o mapa
 - **Handlers triviais** — 3-5 linhas, impossível esconder bug
 
 </v-clicks>
 
 <div v-click class="mt-8 text-center text-lg opacity-80">
-Vocês <strong>já</strong> aplicam DIP. Agora é só apontar pra Protocol
-em vez de classe concreta.
+<strong>Negócio decide os detalhes. Não o contrário.</strong>
 </div>
 
 <!--
@@ -954,66 +931,8 @@ trabalho' — olha, não dá mais."
 -->
 
 ---
-layout: center
-class: text-center
----
 
-# Acabamos os 5 princípios.
-
-<div class="text-lg mt-6 opacity-70">
-Antes do fechamento, uma tabela-resumo.
-</div>
-
-<!--
-Fala (15s): "Fim do miolo. Antes de amarrar com Clean Arch, um slide de
-review rápido — cabulete que vocês podem colar na mesa de vocês."
--->
-
----
-
-# Tabela-resumo SOLID
-
-| Princípio | Dor | Cura | Onde mora |
-|---|---|---|---|
-| **S** | Classe responde a muitos chefes | Separe por stakeholder | `domain` + `infra` + `presentation` |
-| **O** | Novo comportamento edita arquivo existente | Strategy / Policy | `domain/*/policy.py` |
-| **L** | Subclass mente sobre contrato | Composição + flag | `domain` (entidades planas) |
-| **I** | Interface fat obriga clientes a saber demais | Protocols pequenos | `domain/*/protocol.py` |
-| **D** | Alto nível depende de baixo nível | Ambos dependem de abstração | `domain` central, `infra` implementa |
-
-<div class="text-center mt-8 text-lg opacity-70">
-Esse slide é a <strong>cola</strong>. Printe e cole na mesa.
-</div>
-
-<!--
-Fala (2 min): "5 linhas. Pro primeiro mês de vocês praticando, esse é
-TODO o conteúdo que importa. Coluna 'Onde mora' vai fazer sentido nos
-próximos slides."
--->
-
----
-layout: center
-class: text-center
----
-
-# Tour pelo `after/`
-
-<div class="text-xl mt-8">
-Já sabemos as curas. Agora, um zoom-out:
-</div>
-
-<div class="text-lg mt-4 opacity-70">
-<strong>o que a estrutura do repo virou?</strong>
-</div>
-
-<!--
-Fala (15s): "Vamos fazer o tour do after agora. Mesma funcionalidade
-do before, mas reorganizada."
--->
-
----
-
-# A estrutura que emergiu
+# Estrutura do `after/`
 
 ```
 after/app/
@@ -1040,7 +959,7 @@ Infra implementando. Presentation na ponta. Isso tem um nome."
 layout: center
 ---
 
-# Esse desenho tem um nome:
+# Essa estrutura nos mostra algo:
 
 <div class="text-6xl mt-8 font-bold">
 Clean Architecture
@@ -1048,7 +967,7 @@ Clean Architecture
 
 <div class="text-lg mt-8 opacity-70 max-w-2xl">
 E aqui está a coisa <strong>importante</strong>:<br/>
-a gente <u>não decidiu</u> isso antes. <br/>
+<u>não definimos</u> isso antes. <br/>
 <strong>Emergiu</strong> aplicando SOLID.
 </div>
 
@@ -1064,7 +983,7 @@ com disciplina'. Essa diferença é importante."
 
 # Cada princípio mora em camadas
 
-<div class="grid grid-cols-2 gap-4 mt-4">
+<div class="grid grid-cols-2 gap-6 mt-2 text-sm">
 
 <div>
 
@@ -1074,12 +993,15 @@ com disciplina'. Essa diferença é importante."
 - **O** — policies e strategies
 - **I** — Protocols segregados
 
+<img src="/clean-architecture.png" class="max-h-40 mx-auto mt-2" alt="Clean Architecture concentric circles by Robert C. Martin" />
+
 </div>
 
 <div>
 
 **application**
 - **S** — um use case por ação
+- **L** — partial result em vez de explodir mid-loop
 - Só conhece `domain/`
 
 **infra**
@@ -1094,16 +1016,18 @@ com disciplina'. Essa diferença é importante."
 
 </div>
 
-<div v-click class="mt-8 text-center text-lg opacity-80">
+<div class="absolute bottom-6 left-0 right-0 text-center text-lg opacity-80">
 Setas apontam <strong>pra dentro</strong>. Sempre.
 </div>
 
 <!--
-Fala (2 min): "Mapa completo. Qual letra vive onde. DIP é o que
+Fala (2min30s): "Mapa completo. Qual letra vive onde. DIP é o que
 desenha a arquitetura: ele diz que setas apontam pra dentro. SRP
 define o tamanho das caixas. OCP abre espaço dentro de cada caixa.
 ISP define a fronteira entre caixas. LSP garante que substituir
-implementação não quebra nada."
+implementação não quebra nada. Aproveite pra reapresentar o repo
+inteiro com essa lente — abrir o IDE rapidinho e mostrar que cada
+pasta de after/ é uma das letras virando pasta."
 -->
 
 ---
@@ -1125,10 +1049,13 @@ naturalmente se vocês aplicarem SOLID.
 </div>
 
 <!--
-Fala (2 min): "Não decorem. Estudem SOLID, essas regras CAEM. É o
+Fala (2min30s): "Não decorem. Estudem SOLID, essas regras CAEM. É o
 contrário do que o livro do Uncle Bob sugere. Ele diz 'adote essa
 estrutura'. Eu digo 'pratique SOLID, a estrutura aparece'. Caminho
-diferente, mesmo destino."
+diferente, mesmo destino. Antes de avançar, deixe a regra final
+respirar: 'enquanto não dói, seu código de 5 linhas É o design
+correto' — isso desarma o medo de júnior achar que precisa
+arquitetar tudo no dia 1."
 -->
 
 ---
@@ -1136,7 +1063,7 @@ diferente, mesmo destino."
 # Quando SOLID pede ainda mais separação
 
 <div class="text-lg mt-4 mb-6">
-Sinais de que projeto grande precisa <strong>extra</strong>:
+Sinais de que projeto está cresendo e precisa de mais divisões:
 </div>
 
 <v-clicks>
@@ -1168,10 +1095,9 @@ de 20 linhas precisa. SOLID é reagir a dor, nunca preventivo."
 <v-clicks>
 
 1. **Escolha UM arquivo** que incomoda — só um
-2. **Identifique qual letra dói** mais ali (use a tabela-resumo)
-3. **Refatore 1 princípio por vez** — não SOLID-e tudo de uma
+2. **Identifique qual letra dói** mais ali
+3. **Refatore 1 princípio por vez** — não aplique SOLID tudo de uma
 4. **Escreva o teste antes** — garante que comportamento não muda
-5. **PR com review** pedindo feedback no princípio aplicado
 
 </v-clicks>
 
@@ -1189,35 +1115,29 @@ aplica OCP no discount', vou pagar um café pra cada um."
 
 ---
 layout: two-cols
-class: pt-8
 ---
 
 # Me segue lá
 
-<div class="flex flex-col items-center">
+<div class="flex flex-col items-center text-center">
   <img src="/linkedin-avatar.jpg" class="w-32 h-32 rounded-full" />
-  <p class="mt-4 font-bold text-xl">Luiz Campos</p>
-  <p class="opacity-70">@luizcampos331</p>
-  <p class="mt-2 text-sm">linkedin.com/in/luizcampos331</p>
-</div>
-
-<div class="mt-6 text-sm opacity-80 text-center max-w-xs">
-DM liberada — dúvida, code review, projeto novo. <br/>
-Respondo todos.
+  <div class="mt-3 font-bold text-xl">Luiz Campos</div>
+  <div class="text-base opacity-70">@luizcampos331</div>
+  <div class="text-sm opacity-80">linkedin.com/in/luizcampos331</div>
+  <div class="mt-4 text-sm opacity-80 max-w-xs">
+    DM liberada — dúvida, code review, projeto novo.<br/>
+    Respondo todos.
+  </div>
 </div>
 
 ::right::
 
 # Pra continuar estudando
 
-<v-clicks>
-
+- 📖 *Clean Code* — **Robert C. Martin**
 - 📖 *Clean Architecture* — **Robert C. Martin**
-- 📖 *A Philosophy of Software Design* — **John Ousterhout** (complementa)
 - 🎥 [refactoring.guru](https://refactoring.guru) — patterns com exemplos
 - 💻 Este repo: [github.com/luizcampos331/solid-just-travel](https://github.com/luizcampos331/solid-just-travel)
-
-</v-clicks>
 
 <!--
 Fala (2 min): "LinkedIn aberto. O repo vai ficar público, clonar à
@@ -1245,7 +1165,7 @@ github.com/luizcampos331/solid-just-travel
 </div>
 
 <!--
-Fala (4 min Q&A): deixar aberto. Perguntas comuns antecipadas:
+Fala (5 min Q&A): deixar aberto. Perguntas comuns antecipadas:
 
 1. "Quando devo separar services/ do application/?"
    R: Nunca. application/ JÁ é services/. Se estão separados, é
@@ -1263,4 +1183,3 @@ Fala (4 min Q&A): deixar aberto. Perguntas comuns antecipadas:
    R: Dataclass. Pydantic é pra serialização (presentation). Se seu
    domain importa Pydantic, tá violando DIP.
 -->
-
