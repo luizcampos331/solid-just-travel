@@ -1,0 +1,45 @@
+/* Esconde o goto-dialog do Slidev que está renderizando como sidebar permanente.
+ * Bug observado na versão 0.49.29 — o elemento #slidev-goto-dialog aparece fixo
+ * no lado direito sem fechar via atalho G/Esc.
+ * Impacto: perde-se a feature "pular para slide por número" — aceitável para a palestra.
+ */
+#slidev-goto-dialog {
+  display: none !important;
+}
+
+/* ==========================================================================
+ * Callouts (caixas bg-*-50) — garante legibilidade no modo dark.
+ * Os slides usam classes como `bg-blue-50` / `bg-orange-50` que são tons MUITO
+ * claros; no dark mode o texto herda cor branca e fica invisível. Aqui a gente
+ * força texto escuro e sombra sutil pra contraste.
+ * ========================================================================== */
+.slidev-layout div[class*="bg-blue-50"],
+.slidev-layout div[class*="bg-orange-50"],
+.slidev-layout div[class*="bg-red-50"],
+.slidev-layout div[class*="bg-purple-50"],
+.slidev-layout div[class*="bg-green-50"],
+.slidev-layout div[class*="bg-yellow-50"] {
+  color: #111827 !important; /* gray-900 */
+}
+
+.slidev-layout div[class*="bg-blue-50"] *,
+.slidev-layout div[class*="bg-orange-50"] *,
+.slidev-layout div[class*="bg-red-50"] *,
+.slidev-layout div[class*="bg-purple-50"] *,
+.slidev-layout div[class*="bg-green-50"] *,
+.slidev-layout div[class*="bg-yellow-50"] * {
+  color: #111827 !important;
+}
+
+/* `<code>` dentro desses callouts precisa de bg mais escuro pra destacar */
+.slidev-layout div[class*="bg-blue-50"] code,
+.slidev-layout div[class*="bg-orange-50"] code,
+.slidev-layout div[class*="bg-red-50"] code,
+.slidev-layout div[class*="bg-purple-50"] code,
+.slidev-layout div[class*="bg-green-50"] code,
+.slidev-layout div[class*="bg-yellow-50"] code {
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  color: #111827 !important;
+  padding: 0 0.25rem;
+  border-radius: 0.25rem;
+}
