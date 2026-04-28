@@ -38,9 +38,9 @@ layout: two-cols
 # Quem fala
 
 - **Luiz Campos**
-- Dev backend, 10+ anos de experiencia em tecnologia
+- Staff engineer, 10+ anos de experiencia em tecnologia
 - Já sofri na pele a dor das violações de SOLID em produção
-- Hoje venho como "guia turístico" — vocês conhecem o código melhor que eu
+- Hoje venho como "guia turístico" — vocês conhecem a linguagem melhor que eu
 
 ::right::
 
